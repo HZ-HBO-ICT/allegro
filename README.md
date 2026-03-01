@@ -43,6 +43,8 @@ npm start
 ```
 src/
 ├── server.ts              # Express + Apollo GraphQL server setup
+├── lib/
+│   └── prisma.ts          # Shared Prisma client instance (with SQLite adapter)
 ├── schema/
 │   └── typeDefs.ts        # GraphQL schema definitions
 ├── resolvers/             # GraphQL resolvers
@@ -64,6 +66,10 @@ prisma/
 ├── schema.prisma          # Prisma data model
 └── seed.ts               # Database seed script
 
+generated/
+└── prisma/               # Generated Prisma Client (do not edit manually)
+
+prisma.config.ts          # Prisma 7 configuration (database URL, migrations path)
 database.sqlite           # SQLite database (auto-created)
 ```
 
@@ -453,12 +459,16 @@ npm run prisma:studio
 ### Production
 - **@apollo/server** (v4.9.5): GraphQL server
 - **express** (v4.18.2): Web framework
-- **@prisma/client**: Database ORM
+- **@prisma/client** (v7): Database ORM client
+- **@prisma/adapter-better-sqlite3** (v7): SQLite driver adapter for Prisma 7
+- **better-sqlite3**: SQLite native driver
 - **zod**: Runtime type validation
 - **graphql**: GraphQL implementation
 - **cors**: CORS middleware
 
 ### Development
+
+- **prisma** (v7): Prisma CLI (migrations, generate, studio)
 - **typescript**: TypeScript compiler
 - **ts-node-dev**: Hot reload TypeScript runner
 - **@types/node**: Node.js type definitions

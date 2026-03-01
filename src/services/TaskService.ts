@@ -1,7 +1,5 @@
-import { PrismaClient } from '@prisma/client';
 import { TaskInput, TaskUpdateInput } from '../types';
-
-const prisma = new PrismaClient();
+import { prisma } from '../lib/prisma';
 
 export class TaskService {
   async getAllTasks(filters?: {
