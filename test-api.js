@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * TASKEY REST API TEST SUITE
+ * ALLEGRO REST API TEST SUITE
  *
  * Run the server first: npm run dev
  * Then run: node test-api.js
@@ -53,7 +53,7 @@ const tests = [
 ];
 
 async function runTests() {
-  console.log('\nTASKEY REST API TEST SUITE\n');
+  console.log('\nALLEGRO REST API TEST SUITE\n');
   console.log('Make sure the server is running: npm run dev\n');
 
   for (const test of tests) {

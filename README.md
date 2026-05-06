@@ -1,4 +1,4 @@
-# Taskey - Task Management REST API
+# Allegro - Task Management REST API
 
 A task management system built with Node.js, Express.js, Prisma, and TypeScript.
 
