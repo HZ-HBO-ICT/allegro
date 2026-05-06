@@ -1,44 +1,36 @@
 #!/usr/bin/env node
 
 /**
- * TASKEY GRAPHQL API TEST SUITE
+ * TASKEY REST API TEST SUITE
  *
- * This file demonstrates how to test the GraphQL API
- * Run from directory: npm run dev (in another terminal)
+ * Run the server first: npm run dev
  * Then run: node test-api.js
  */
 
 const http = require('http');
 
-const GRAPHQL_ENDPOINT = 'http://localhost:4000/graphql';
+const BASE = 'http://localhost:4000';
 
-// Helper function to make GraphQL requests
-async function graphqlRequest(query, variables = {}) {
+async function request(method, path, body) {
   return new Promise((resolve, reject) => {
-    const payload = JSON.stringify({ query, variables });
-
+    const payload = body ? JSON.stringify(body) : null;
     const options = {
       hostname: 'localhost',
       port: 4000,
-      path: '/graphql',
-      method: 'POST',
+      path,
+      method,
       headers: {
         'Content-Type': 'application/json',
-        'Content-Length': Buffer.byteLength(payload),
+        ...(payload ? { 'Content-Length': Buffer.byteLength(payload) } : {}),
       },
     };
 
     const req = http.request(options, (res) => {
       let data = '';
-      res.on('data', (chunk) => {
-        data += chunk;
-      });
+      res.on('data', (chunk) => { data += chunk; });
       res.on('end', () => {
         try {
-          resolve({
-            status: res.statusCode,
-            data: JSON.parse(data),
-          });
+          resolve({ status: res.statusCode, data: data ? JSON.parse(data) : null });
         } catch (e) {
           reject(e);
         }
@@ -46,126 +38,38 @@ async function graphqlRequest(query, variables = {}) {
     });
 
     req.on('error', reject);
-    req.write(payload);
+    if (payload) req.write(payload);
     req.end();
   });
 }
 
-// Test queries
 const tests = [
-  {
-    name: 'Get all projects',
-    query: `
-      query {
-        projects {
-          id
-          title
-          description
-          tasks {
-            id
-            title
-          }
-        }
-      }
-    `,
-  },
-  {
-    name: 'Get all tags',
-    query: `
-      query {
-        tags {
-          id
-          title
-        }
-      }
-    `,
-  },
-  {
-    name: 'Get all tasks',
-    query: `
-      query {
-        tasks {
-          id
-          title
-          priority
-          status
-          progress
-          project {
-            id
-            title
-          }
-          tags {
-            id
-            title
-          }
-        }
-      }
-    `,
-  },
-  {
-    name: 'Get single task',
-    query: `
-      query {
-        task(id: 1) {
-          id
-          title
-          priority
-          status
-          progress
-          createdAt
-          project {
-            id
-            title
-          }
-          tags {
-            id
-            title
-          }
-        }
-      }
-    `,
-  },
-  {
-    name: 'Create a new project',
-    query: `
-      mutation {
-        createProject(input: {
-          title: "Test Project"
-          description: "A project created by automation"
-        }) {
-          id
-          title
-          description
-        }
-      }
-    `,
-  },
+  { name: 'Health check',        fn: () => request('GET', '/health') },
+  { name: 'Get all projects',    fn: () => request('GET', '/projects') },
+  { name: 'Get all tags',        fn: () => request('GET', '/tags') },
+  { name: 'Get all tasks',       fn: () => request('GET', '/tasks') },
+  { name: 'Get single task',     fn: () => request('GET', '/tasks/1') },
+  { name: 'Create a project',    fn: () => request('POST', '/projects', { title: 'Test Project', description: 'Created by test' }) },
 ];
 
-// Run tests
 async function runTests() {
-  console.log('\n🧪 TASKEY GRAPHQL API TEST SUITE\n');
+  console.log('\nTASKEY REST API TEST SUITE\n');
   console.log('Make sure the server is running: npm run dev\n');
 
   for (const test of tests) {
     try {
-      console.log(`📝 Testing: ${test.name}`);
-      const result = await graphqlRequest(test.query);
-
-      if (result.data.errors) {
-        console.log(`   ❌ Error: ${result.data.errors[0].message}\n`);
-      } else {
-        console.log(`   ✅ Success\n`);
-      }
+      console.log(`Testing: ${test.name}`);
+      const result = await test.fn();
+      const ok = result.status >= 200 && result.status < 300;
+      console.log(`  ${ok ? 'OK' : 'FAIL'} (${result.status})\n`);
     } catch (error) {
-      console.log(`   ❌ Connection Error: ${error.message}`);
-      console.log(`   Make sure the server is running on port 4000\n`);
+      console.log(`  Connection Error: ${error.message}`);
+      console.log(`  Make sure the server is running on port 4000\n`);
       break;
     }
   }
 
-  console.log('✨ Tests completed!\n');
-  console.log('GraphQL Playground available at: http://localhost:4000/graphql\n');
+  console.log('Tests completed!\n');
 }
 
 runTests();

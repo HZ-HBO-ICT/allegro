@@ -1,7 +1,7 @@
 {
   "name": "taskey",
   "version": "1.0.0",
-  "description": "Task management system with GraphQL API",
+  "description": "Task management REST API",
   "main": "dist/server.js",
   "scripts": {
     "dev": "ts-node-dev --respawn src/server.ts",
@@ -16,22 +16,17 @@
   "keywords": [
     "task",
     "management",
-    "graphql",
     "express"
   ],
   "author": "Frans Blauw, Valeria Stamenova",
   "license": "MIT",
   "dependencies": {
-    "@apollo/server": "^4.9.5",
-    "@graphql-tools/schema": "^10.0.0",
     "@prisma/adapter-better-sqlite3": "^7.4.2",
     "@prisma/client": "^7.0.0",
     "better-sqlite3": "^12.6.2",
     "cors": "^2.8.5",
     "dotenv": "^16.3.1",
     "express": "^4.18.2",
-    "graphql": "^16.8.1",
-    "graphql-tag": "^2.12.6",
     "zod": "^3.22.4"
   },
   "devDependencies": {

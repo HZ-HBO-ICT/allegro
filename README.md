@@ -1,627 +1,289 @@
-# Taskey - GraphQL Task Management API
+# Taskey - Task Management REST API
 
-A modern task management system built with Node.js, Express.js, Prisma, and GraphQL with TypeScript.
+A task management system built with Node.js, Express.js, Prisma, and TypeScript.
 
-> **Migration Note**: This is a conversion of the original PHP/Maestro framework application to a modern Node.js/GraphQL stack.
+> **Migration Note**: This is a conversion of the original PHP/Maestro framework application to a modern Node.js/REST stack.
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Prerequisites
+
 - Node.js 18+
-- npm or yarn
+- npm
 
 ### Installation
 
 ```bash
-# Install dependencies
 npm install
 
-# Set up the database (initial migration + seed)
-npm run prisma:migrate  # This will run migrations and prompt to seed
-npm run prisma:seed     # Seed with sample data (LOTR themed)
+# Set up the database
+npm run prisma:migrate
+npm run prisma:seed     # Seed with LOTR-themed sample data
 
-# Start development server
 npm run dev
 ```
 
-The GraphQL API will be available at: **http://localhost:4000/graphql**
+The API will be available at <http://localhost:4000>.
 
 ### Build for Production
 
 ```bash
-# Compile TypeScript
 npm run build
-
-# Run production build
 npm start
 ```
 
 ---
 
-## 📊 Project Structure
+## Project Structure
 
 ```
 src/
-├── server.ts              # Express + Apollo GraphQL server setup
+├── server.ts              # Express server + REST routes
 ├── lib/
-│   └── prisma.ts          # Shared Prisma client instance (with SQLite adapter)
-├── schema/
-│   └── typeDefs.ts        # GraphQL schema definitions
-├── resolvers/             # GraphQL resolvers
-│   ├── Query.ts           # Query resolvers
-│   ├── Mutation.ts        # Mutation resolvers
-│   └── index.ts           # DateTime scalar + type definitions
-├── services/              # Business logic layer (Prisma interactions)
+│   └── prisma.ts          # Shared Prisma client (SQLite adapter)
+├── services/              # Business logic (Prisma interactions)
 │   ├── TaskService.ts
 │   ├── ProjectService.ts
 │   └── TagService.ts
 ├── types/
-│   └── index.ts           # TypeScript type definitions
-├── validation/
-│   └── schemas.ts         # Zod validation schemas
-└── utils/
-    └── errors.ts          # Error handling utilities
+│   └── index.ts           # TypeScript interfaces
+└── validation/
+    └── schemas.ts         # Zod validation schemas
 
 prisma/
 ├── schema.prisma          # Prisma data model
-└── seed.ts               # Database seed script
+└── seed.ts                # Database seed script
 
 generated/
-└── prisma/               # Generated Prisma Client (do not edit manually)
+└── prisma/                # Generated Prisma client (do not edit)
 
-prisma.config.ts          # Prisma 7 configuration (database URL, migrations path)
-database.sqlite           # SQLite database (auto-created)
+prisma.config.ts           # Prisma 7 configuration
 ```
 
 ---
 
-## 🗄️ Database Schema
+## Database Schema
+
+### Project
+
+| Field | Type | Notes |
+| --- | --- | --- |
+| id | Int | Primary key |
+| title | String | Required |
+| description | String | Optional |
+| tasks | Task[] | Relation |
+
+### Task
+
+| Field | Type | Notes |
+| --- | --- | --- |
+| id | Int | Primary key |
+| title | String | Required |
+| description | String | Optional |
+| priority | Int | 0–3 (low to high) |
+| status | Int | 0–4 |
+| progress | Int | 0–100 |
+| createdAt | DateTime | Auto |
+| completedAt | DateTime | Optional |
+| projectId | Int | Optional FK |
+| tags | Tag[] | Many-to-many |
+
+### Tag
+
+| Field | Type | Notes |
+| --- | --- | --- |
+| id | Int | Primary key |
+| title | String | Required |
+| tasks | Task[] | Many-to-many |
+
+---
+
+## API Reference
+
+Base URL: `http://localhost:4000`
 
 ### Projects
-```graphql
-type Project {
-  id: Int!
-  title: String!
-  description: String
-  tasks: [Task!]!
-}
+
+| Method | Path | Description |
+| --- | --- | --- |
+| GET | `/projects` | List all projects |
+| GET | `/projects/:id` | Get a project |
+| POST | `/projects` | Create a project |
+| PUT | `/projects/:id` | Update a project |
+| DELETE | `/projects/:id` | Delete a project |
+
+**Create / Update body:**
+
+```json
+{ "title": "My Project", "description": "Optional" }
 ```
 
 ### Tasks
-```graphql
-type Task {
-  id: Int!
-  title: String!
-  description: String
-  priority: Int!          # 0-3 (lowest to highest)
-  status: Int!            # 0-4 (different states)
-  progress: Int!          # 0-100 percentage
-  createdAt: DateTime!
-  completedAt: DateTime
-  projectId: Int
-  project: Project
-  tags: [Tag!]!
+
+| Method | Path | Description |
+| --- | --- | --- |
+| GET | `/tasks` | List tasks (filterable) |
+| GET | `/tasks/:id` | Get a task |
+| POST | `/tasks` | Create a task |
+| PUT | `/tasks/:id` | Update a task |
+| DELETE | `/tasks/:id` | Delete a task |
+| POST | `/tasks/:taskId/tags/:tagId` | Add tag to task |
+| DELETE | `/tasks/:taskId/tags/:tagId` | Remove tag from task |
+
+**Query parameters for `GET /tasks`:**
+
+- `projectId` — filter by project
+- `tagId` — filter by tag
+- `priority` — filter by priority (0–3)
+- `status` — filter by status (0–4)
+
+**Create body:**
+
+```json
+{
+  "title": "New Task",
+  "description": "Optional",
+  "priority": 2,
+  "status": 0,
+  "progress": 0,
+  "projectId": 1
 }
 ```
 
 ### Tags
-```graphql
-type Tag {
-  id: Int!
-  title: String!
-  tasks: [Task!]!
-}
+
+| Method | Path | Description |
+| --- | --- | --- |
+| GET | `/tags` | List all tags |
+| GET | `/tags/:id` | Get a tag |
+| POST | `/tags` | Create a tag |
+| PUT | `/tags/:id` | Update a tag |
+| DELETE | `/tags/:id` | Delete a tag |
+
+**Create / Update body:**
+
+```json
+{ "title": "My Tag" }
+```
+
+### Health
+
+```
+GET /health
 ```
 
 ---
 
-## 📝 API Documentation
+## Error Responses
 
-### Queries
+All errors return JSON with an `error` field:
 
-#### Get All Tasks
-```graphql
-query {
-  tasks {
-    id
-    title
-    priority
-    status
-    progress
-    project {
-      id
-      title
-    }
-    tags {
-      id
-      title
-    }
-  }
-}
+```json
+{ "error": "Task not found" }
 ```
 
-#### Get Tasks with Filters
-```graphql
-query {
-  tasks(priority: 2, status: 1) {
-    id
-    title
-    priority
-    status
-  }
-}
-
-# Get tasks by project
-query {
-  tasks(projectId: 1) {
-    id
-    title
-  }
-}
-
-# Get tasks by tag
-query {
-  tasks(tagId: 2) {
-    id
-    title
-  }
-}
-```
-
-#### Get Single Task
-```graphql
-query {
-  task(id: 1) {
-    id
-    title
-    description
-    priority
-    status
-    progress
-    createdAt
-    completedAt
-    project {
-      id
-      title
-    }
-    tags {
-      id
-      title
-    }
-  }
-}
-```
-
-#### Get All Projects
-```graphql
-query {
-  projects {
-    id
-    title
-    description
-    tasks {
-      id
-      title
-      priority
-      status
-    }
-  }
-}
-```
-
-#### Get Single Project
-```graphql
-query {
-  project(id: 1) {
-    id
-    title
-    description
-    tasks {
-      id
-      title
-      status
-      progress
-    }
-  }
-}
-```
-
-#### Get All Tags
-```graphql
-query {
-  tags {
-    id
-    title
-    tasks {
-      id
-      title
-    }
-  }
-}
-```
+| Status | Meaning |
+| --- | --- |
+| 400 | Validation error |
+| 404 | Resource not found |
+| 500 | Server / database error |
 
 ---
 
-### Mutations
-
-#### Create Task
-```graphql
-mutation {
-  createTask(input: {
-    title: "New Task"
-    description: "Task description"
-    priority: 2
-    status: 0
-    progress: 0
-    projectId: 1
-  }) {
-    id
-    title
-    priority
-    status
-  }
-}
-```
-
-#### Update Task
-```graphql
-mutation {
-  updateTask(id: 1, input: {
-    title: "Updated Title"
-    status: 2
-    progress: 50
-  }) {
-    id
-    title
-    status
-    progress
-  }
-}
-```
-
-#### Delete Task
-```graphql
-mutation {
-  deleteTask(id: 1)
-}
-```
-
-#### Create Project
-```graphql
-mutation {
-  createProject(input: {
-    title: "New Project"
-    description: "Project description"
-  }) {
-    id
-    title
-  }
-}
-```
-
-#### Update Project
-```graphql
-mutation {
-  updateProject(id: 1, input: {
-    title: "Updated Project"
-  }) {
-    id
-    title
-  }
-}
-```
-
-#### Delete Project
-```graphql
-mutation {
-  deleteProject(id: 1)
-}
-```
-
-#### Create Tag
-```graphql
-mutation {
-  createTag(input: {
-    title: "New Tag"
-  }) {
-    id
-    title
-  }
-}
-```
-
-#### Update Tag
-```graphql
-mutation {
-  updateTag(id: 1, input: {
-    title: "Updated Tag"
-  }) {
-    id
-    title
-  }
-}
-```
-
-#### Delete Tag
-```graphql
-mutation {
-  deleteTag(id: 1)
-}
-```
-
-#### Add Tag to Task
-```graphql
-mutation {
-  addTagToTask(taskId: 1, tagId: 2) {
-    id
-    title
-    tags {
-      id
-      title
-    }
-  }
-}
-```
-
-#### Remove Tag from Task
-```graphql
-mutation {
-  removeTagFromTask(taskId: 1, tagId: 2) {
-    id
-    title
-    tags {
-      id
-      title
-    }
-  }
-}
-```
-
----
-
-## ✅ Validation Rules
+## Validation Rules
 
 ### Tasks
-- **title**: Required, minimum 1 character
-- **priority**: Required, must be 0-3
-- **status**: Required, must be 0-4
-- **progress**: Optional, defaults to 0, must be 0-100
-- **description**: Optional, string
-- **projectId**: Optional, existing project ID
 
-### Projects
-- **title**: Required, minimum 1 character
-- **description**: Optional, string
+- `title` — required, min 1 character
+- `priority` — required (create), integer 0–3
+- `status` — required (create), integer 0–4
+- `progress` — optional, integer 0–100, defaults to 0
+- `description` — optional
+- `projectId` — optional
 
-### Tags
-- **title**: Required, minimum 1 character
+### Projects & Tags
 
----
-
-## 🔄 Migration from PHP to Node.js
-
-### Key Changes:
-
-| Aspect | PHP Version | Node.js Version |
-|--------|------------|-----------------|
-| Framework | Custom Maestro MVC | Express.js + Apollo GraphQL |
-| ORM | Repository Pattern (PDO) | Prisma ORM |
-| API | REST endpoints | GraphQL |
-| Templates | Twig server-side | Removed (API-only) |
-| Language | PHP 8.2 | TypeScript 5.x |
-| Validation | Manual validation | Zod schemas |
-| Database | SQLite | SQLite (same) |
-
-### Architecture Comparison:
-
-**PHP MVC Layer:**
-```
-Controllers → Services/Repositories → Models → Database
-```
-
-**Node.js GraphQL Layer:**
-```
-GraphQL Resolvers → Services → Prisma Client → Database
-```
+- `title` — required, min 1 character
+- `description` — optional (projects only)
 
 ---
 
-## 🛠️ Development Tools
-
-### Available Scripts
+## Available Scripts
 
 ```bash
-# Development
 npm run dev              # Start dev server with hot reload
-npm run build           # Compile TypeScript
+npm run build            # Compile TypeScript
+npm start                # Run compiled build
 
-# Database
-npm run prisma:migrate  # Run migrations with prompts
-npm run prisma:seed     # Run seed script
-npm run prisma:studio   # Open Prisma Studio GUI
-
-# Production
-npm start               # Run compiled JS
-npm run type-check     # Check TypeScript types without building
-```
-
-### Prisma Studio
-
-To explore your database visually:
-```bash
-npm run prisma:studio
+npm run prisma:migrate   # Run database migrations
+npm run prisma:seed      # Seed sample data
+npm run prisma:studio    # Open Prisma Studio GUI
+npm run type-check       # TypeScript check without building
 ```
 
 ---
 
-## 📦 Dependencies
-
-### Production
-- **@apollo/server** (v4.9.5): GraphQL server
-- **express** (v4.18.2): Web framework
-- **@prisma/client** (v7): Database ORM client
-- **@prisma/adapter-better-sqlite3** (v7): SQLite driver adapter for Prisma 7
-- **better-sqlite3**: SQLite native driver
-- **zod**: Runtime type validation
-- **graphql**: GraphQL implementation
-- **cors**: CORS middleware
-
-### Development
-
-- **prisma** (v7): Prisma CLI (migrations, generate, studio)
-- **typescript**: TypeScript compiler
-- **ts-node-dev**: Hot reload TypeScript runner
-- **@types/node**: Node.js type definitions
-
----
-
-## 🐛 Error Handling
-
-The API provides detailed error messages for:
-
-### Validation Errors (Status: 400)
-```json
-{
-  "errors": [
-    {
-      "message": "Title is required",
-      "extensions": {
-        "statusCode": 400
-      }
-    }
-  ]
-}
-```
-
-### Not Found Errors (Status: 404)
-```json
-{
-  "errors": [
-    {
-      "message": "Task not found",
-      "extensions": {
-        "statusCode": 404
-      }
-    }
-  ]
-}
-```
-
-### Database Errors (Status: 500)
-```json
-{
-  "errors": [
-    {
-      "message": "Database operation failed",
-      "extensions": {
-        "statusCode": 500
-      }
-    }
-  ]
-}
-```
-
----
-
-## 🌱 Sample Data
-
-The seeded database includes Lord of the Rings themed data:
-
-### Projects (3)
-- The Fellowship of the Ring
-- The Two Towers
-- The Return of the King
-
-### Tags (4)
-- Men
-- Hobbits
-- Elves
-- Dwarves
-
-### Tasks (15)
-- Pre-populated with sample tasks across projects
-- Associated with tags via many-to-many relationships
-
----
-
-## 🔐 Security Notes
-
-- Input validation is enforced at the resolver level using Zod
-- All database queries use Prisma parameterized queries (SQL injection safe)
-- CORS is enabled for local development
-- GraphQL introspection enabled in development, disabled in production
-
----
-
-## 📝 Environment Variables
-
-Create a `.env` file:
+## Environment Variables
 
 ```env
-# Database
 DATABASE_URL="file:./database.sqlite"
-
-# Server
 PORT=4000
 NODE_ENV=development
 ```
 
 ---
 
-## 🚀 Deployment
+## Dependencies
 
-### Build for Production
-```bash
-npm run build
-```
+### Production
 
-### Run Production Build
-```bash
-PORT=3000 NODE_ENV=production npm start
-```
+- **express** — web framework
+- **@prisma/client** (v7) — database ORM
+- **@prisma/adapter-better-sqlite3** — SQLite driver for Prisma 7
+- **better-sqlite3** — SQLite native driver
+- **zod** — runtime validation
+- **cors** — CORS middleware
 
-### Docker (Optional)
-You can containerize this application with Docker for deployment to cloud platforms.
+### Development
 
----
-
-## 📚 References
-
-- [Apollo Server Documentation](https://www.apollographql.com/docs/apollo-server/)
-- [Prisma Documentation](https://www.prisma.io/docs/)
-- [GraphQL Documentation](https://graphql.org/)
-- [Express.js Documentation](https://expressjs.com/)
+- **prisma** (v7) — CLI for migrations and codegen
+- **typescript**, **ts-node-dev** — TypeScript tooling
 
 ---
 
-## 📄 License
+## Sample Data
 
-MIT
+The seed script populates Lord of the Rings themed data:
 
----
-
-## ✨ Features
-
-- ✅ Full CRUD operations for Tasks, Projects, and Tags
-- ✅ GraphQL API with type safety
-- ✅ Input validation using Zod
-- ✅ Error handling with meaningful messages
-- ✅ SQLite database with Prisma ORM
-- ✅ Hot reload development environment
-- ✅ TypeScript for type safety
-- ✅ Many-to-many relationships (Task-Tag)
-- ✅ Project organization for tasks
-- ✅ Task priority and status tracking
-- ✅ Progress percentage for tasks
-- ✅ Sample data with seeds
+- **3 Projects**: The Fellowship of the Ring, The Two Towers, The Return of the King
+- **4 Tags**: Men, Hobbits, Elves, Dwarves
+- **15 Tasks**: distributed across projects with tag associations
 
 ---
 
-## 🤝 Contributing
+## Security Notes
 
-Feel free to submit issues and enhancement requests!
+- Input validated with Zod before reaching the database
+- Prisma uses parameterized queries (SQL injection safe)
+- CORS enabled for local development
 
 ---
+
+## Migration from PHP
+
+| Aspect | PHP | Node.js |
+| --- | --- | --- |
+| Framework | Custom Maestro MVC | Express.js |
+| ORM | Repository Pattern (PDO) | Prisma |
+| API | REST | REST |
+| Language | PHP 8.2 | TypeScript 5.x |
+| Validation | Manual | Zod |
+| Database | SQLite | SQLite |
 
 **Original Authors**: Frans Blauw, Valeria Stamenova
-**Migrated to Node.js/GraphQL**: 2026
+
+---
+
+## License
+
+MIT
