@@ -1,8 +1,10 @@
-# Allegro - Task Management REST API
+# Allegro
 
-A task management system built with Node.js, Express.js, Prisma, and TypeScript.
+A lightweight REST API framework built on Node.js, Express.js, Prisma, and TypeScript. Allegro provides the structure and conventions for building data-driven APIs — routing, validation, error handling, and database access — without dictating what your domain looks like.
 
-> **Migration Note**: This is a conversion of the original PHP/Maestro framework application to a modern Node.js/REST stack.
+This repository includes a **task management example** (projects, tasks, tags) to demonstrate how the framework patterns fit together in a real implementation. The example is not the framework itself.
+
+> **Migration Note**: This is a conversion of the original PHP/Maestro framework application to a modern Node.js REST stack.
 
 ## Quick Start
 
@@ -332,7 +334,7 @@ NODE_ENV=development
 
 ## Sample Data
 
-The seed script populates Lord of the Rings themed data:
+The seed script populates the example domain with Lord of the Rings themed data:
 
 - **3 Projects**: The Fellowship of the Ring, The Two Towers, The Return of the King
 - **4 Tags**: Men, Hobbits, Elves, Dwarves
@@ -350,7 +352,9 @@ The seed script populates Lord of the Rings themed data:
 
 ## Migration from PHP
 
-| Aspect | PHP | Node.js |
+The example domain was originally built on a PHP/Maestro framework. Allegro is its Node.js successor.
+
+| Aspect | PHP | Allegro |
 | --- | --- | --- |
 | Framework | Custom Maestro MVC | Express.js |
 | ORM | Repository Pattern (PDO) | Prisma |
