@@ -118,61 +118,61 @@ sequenceDiagram
 **1. Add a Zod schema** in `src/validation/schemas.ts`:
 
 ```ts
-export const createWidgetInputSchema = z.object({
+export const createExampleResourceInputSchema = z.object({
   name: z.string().min(1),
 });
 ```
 
-**2. Add a service class** in `src/services/WidgetService.ts`:
+**2. Add a service class** in `src/services/ExampleResourceService.ts`:
 
 ```ts
 import { prisma } from '../lib/prisma';
 
-export class WidgetService {
-  async getAllWidgets() {
-    return prisma.widget.findMany();
+export class ExampleResourceService {
+  async getAllExampleResources() {
+    return prisma.exampleResource.findMany();
   }
 
-  async createWidget(input: { name: string }) {
-    return prisma.widget.create({ data: input });
+  async createExampleResource(input: { name: string }) {
+    return prisma.exampleResource.create({ data: input });
   }
 }
 
-export const widgetService = new WidgetService();
+export const exampleResourceService = new ExampleResourceService();
 ```
 
 Export it from `src/services/index.ts`:
 
 ```ts
-export { widgetService } from './WidgetService';
+export { exampleResourceService } from './ExampleResourceService';
 ```
 
-**3. Create the route file** at `src/routes/widgets.ts`:
+**3. Create the route file** at `src/routes/exampleResources.ts`:
 
 ```ts
 import { Router } from 'express';
-import { widgetService } from '../services';
-import { createWidgetInputSchema } from '../validation/schemas';
+import { exampleResourceService } from '../services';
+import { createExampleResourceInputSchema } from '../validation/schemas';
 import { asyncHandler } from '../middleware/errorHandling';
 
-export const widgetsRouter = Router();
+export const exampleResourcesRouter = Router();
 
-widgetsRouter.get('/', asyncHandler(async (_req, res) => {
-  res.json(await widgetService.getAllWidgets());
+exampleResourcesRouter.get('/', asyncHandler(async (_req, res) => {
+  res.json(await exampleResourceService.getAllExampleResources());
 }));
 
-widgetsRouter.post('/', asyncHandler(async (req, res) => {
-  const input = createWidgetInputSchema.parse(req.body);
-  res.status(201).json(await widgetService.createWidget(input));
+exampleResourcesRouter.post('/', asyncHandler(async (req, res) => {
+  const input = createExampleResourceInputSchema.parse(req.body);
+  res.status(201).json(await exampleResourceService.createExampleResource(input));
 }));
 ```
 
 **4. Mount it** in `src/server.ts`:
 
 ```ts
-import { widgetsRouter } from './routes/widgets';
+import { exampleResourcesRouter } from './routes/exampleResources';
 
-app.use('/widgets', widgetsRouter);
+app.use('/exampleResources', exampleResourcesRouter);
 ```
 
 That's it — validation errors, service errors, and database errors are all handled automatically by `errorHandling.ts`.
