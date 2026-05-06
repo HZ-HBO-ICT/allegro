@@ -38,12 +38,18 @@ npm start
 
 ```
 src/
-├── server.ts              # Express server + REST routes
+├── server.ts              # App setup: middleware, route mounting, error handler
 ├── lib/
 │   └── prisma.ts          # Shared Prisma client (SQLite adapter)
-├── services/              # Business logic (Prisma interactions)
-│   ├── TaskService.ts
+├── middleware/
+│   └── errorHandling.ts   # asyncHandler wrapper + central error handler
+├── routes/                # One file per resource, mounted in server.ts
+│   ├── projects.ts
+│   ├── tasks.ts
+│   └── tags.ts
+├── services/              # Business logic (all Prisma interactions)
 │   ├── ProjectService.ts
+│   ├── TaskService.ts
 │   └── TagService.ts
 ├── types/
 │   └── index.ts           # TypeScript interfaces
@@ -62,39 +68,112 @@ prisma.config.ts           # Prisma 7 configuration
 
 ---
 
-## Database Schema
+## Adding a New Route
 
-### Project
+Every route follows the same four-file pattern: schema → service → router → mount.
 
-| Field | Type | Notes |
-| --- | --- | --- |
-| id | Int | Primary key |
-| title | String | Required |
-| description | String | Optional |
-| tasks | Task[] | Relation |
+### Request flow
 
-### Task
+```mermaid
+sequenceDiagram
+    participant Client
+    participant server.ts
+    participant routes/resource.ts
+    participant asyncHandler
+    participant ResourceService
+    participant Prisma
+    participant SQLite
 
-| Field | Type | Notes |
-| --- | --- | --- |
-| id | Int | Primary key |
-| title | String | Required |
-| description | String | Optional |
-| priority | Int | 0–3 (low to high) |
-| status | Int | 0–4 |
-| progress | Int | 0–100 |
-| createdAt | DateTime | Auto |
-| completedAt | DateTime | Optional |
-| projectId | Int | Optional FK |
-| tags | Tag[] | Many-to-many |
+    Client->>server.ts: HTTP request
+    server.ts->>routes/resource.ts: app.use('/resource', resourceRouter)
+    routes/resource.ts->>asyncHandler: wraps route handler
+    asyncHandler->>ResourceService: service.getById(id)
+    ResourceService->>Prisma: prisma.resource.findUnique(...)
+    Prisma->>SQLite: SELECT ...
+    SQLite-->>Prisma: row data
+    Prisma-->>ResourceService: typed object
+    ResourceService-->>asyncHandler: result
+    asyncHandler-->>Client: res.json(result)
+```
 
-### Tag
+### Error flow
 
-| Field | Type | Notes |
-| --- | --- | --- |
-| id | Int | Primary key |
-| title | String | Required |
-| tasks | Task[] | Many-to-many |
+When anything throws — a Zod parse failure, a service error, or a Prisma exception — `asyncHandler` forwards it to the central error handler without any per-route try/catch.
+
+```mermaid
+sequenceDiagram
+    participant asyncHandler
+    participant errorHandling.ts
+    participant Client
+
+    asyncHandler->>errorHandling.ts: next(err)
+    note over errorHandling.ts: ZodError → 400<br/>anything else → 500
+    errorHandling.ts-->>Client: { "error": "message" }
+```
+
+### Step-by-step
+
+**1. Add a Zod schema** in `src/validation/schemas.ts`:
+
+```ts
+export const createWidgetInputSchema = z.object({
+  name: z.string().min(1),
+});
+```
+
+**2. Add a service class** in `src/services/WidgetService.ts`:
+
+```ts
+import { prisma } from '../lib/prisma';
+
+export class WidgetService {
+  async getAllWidgets() {
+    return prisma.widget.findMany();
+  }
+
+  async createWidget(input: { name: string }) {
+    return prisma.widget.create({ data: input });
+  }
+}
+
+export const widgetService = new WidgetService();
+```
+
+Export it from `src/services/index.ts`:
+
+```ts
+export { widgetService } from './WidgetService';
+```
+
+**3. Create the route file** at `src/routes/widgets.ts`:
+
+```ts
+import { Router } from 'express';
+import { widgetService } from '../services';
+import { createWidgetInputSchema } from '../validation/schemas';
+import { asyncHandler } from '../middleware/errorHandling';
+
+export const widgetsRouter = Router();
+
+widgetsRouter.get('/', asyncHandler(async (_req, res) => {
+  res.json(await widgetService.getAllWidgets());
+}));
+
+widgetsRouter.post('/', asyncHandler(async (req, res) => {
+  const input = createWidgetInputSchema.parse(req.body);
+  res.status(201).json(await widgetService.createWidget(input));
+}));
+```
+
+**4. Mount it** in `src/server.ts`:
+
+```ts
+import { widgetsRouter } from './routes/widgets';
+
+app.use('/widgets', widgetsRouter);
+```
+
+That's it — validation errors, service errors, and database errors are all handled automatically by `errorHandling.ts`.
 
 ---
 
