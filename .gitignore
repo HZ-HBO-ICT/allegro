@@ -197,3 +197,7 @@ dist/
 
 # Prisma generated client (OS/Node-version specific, regenerate with `prisma generate`)
 generated/
+
+# Local SQLite databases
+*.db
+*.sqlite
