@@ -17,6 +17,7 @@ This repository includes a **task management example** (projects, tasks, tags) t
 
 ```bash
 npm install
+npm run prisma:generate
 
 # Set up the database
 npm run prisma:migrate
