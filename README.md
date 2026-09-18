@@ -8,12 +8,14 @@ This repository includes a **task management example** (projects, tasks, tags) t
 
 ## Quick Start
 
-### Prerequisites
+### Local Installation
+
+#### Prerequisites
 
 - Node.js 18+
 - npm
 
-### Installation
+#### Installation
 
 ```bash
 npm install
@@ -35,6 +37,27 @@ npm start
 ```
 
 ---
+
+### Docker
+
+Install [Docker Desktop](https://docs.docker.com/desktop/setup/install/windows-install/) (hopefully you have it from Y1)
+
+#### How to set up your WSL
+
+1. Install Ubuntu from the MS Store. Both base versions and specific LTS versions may be used. Follow the installer and create a user.
+2. Make sure it is WSL2 instead of WSL1 - `wsl -l -v`.
+3. Go to Docker Desktop > Settings > Resources > Check Enable integration with my default WSL distro and check Ubuntu.
+4. Run `sudo apt update && sudo apt upgrade` to get your kernel and packages up to the latest version.
+
+#### Steps
+
+1. Clone this repo onto your WSL (so in this case Ubuntu)
+2. With VSCode or editor of your choice check out to remote development to the WSL
+3. Find the repository > registry
+4. Run `docker compose up -d` to get the container running (this will run `npm install` for you automatically)
+5. Enter then the container - either use Docker Desktop or the terminal
+6. When you enter the container run all nice things: `npm run prisma:migrate & npm run prisma:seed & npm run dev`
+7. You should be able now to access your application at `localhost:4000`
 
 ## Project Structure
 
