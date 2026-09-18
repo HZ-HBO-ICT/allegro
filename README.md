@@ -46,13 +46,13 @@ Install [Docker Desktop](https://docs.docker.com/desktop/setup/install/windows-i
 
 1. Install Ubuntu from the MS Store. Both base versions and specific LTS versions may be used. Follow the installer and create a user.
 2. Make sure it is WSL2 instead of WSL1 - `wsl -l -v`.
-3. Go to Docker Desktop > Settings > Resources > Check Enable integration with my default WSL distro and check Ubuntu.
+3. Go to Docker Desktop > Settings > Resources > [WSL integration] Check Enable integration with my default WSL distro and check Ubuntu.
 4. Run `sudo apt update && sudo apt upgrade` to get your kernel and packages up to the latest version.
 
 #### Steps
 
 1. Clone this repo onto your WSL (so in this case Ubuntu)
-2. With VSCode or editor of your choice check out to remote development to the WSL
+2. With VSCode or editor of your choice check out to remote development to the WSL (Type `\\wsl$` to start)
 3. Find the repository > registry
 4. Run `docker compose up -d` to get the container running (this will run `npm install` for you automatically)
 5. Enter then the container - either use Docker Desktop or the terminal
