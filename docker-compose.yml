@@ -1,0 +1,11 @@
+services:
+  alegro:
+    image: node:24
+    working_dir: /app
+    volumes:
+      - .:/app
+    command: sh -c "npm install && exec tail -f /dev/null"
+    stdin_open: true
+    tty: true
+    ports:
+      - 4000:4000
