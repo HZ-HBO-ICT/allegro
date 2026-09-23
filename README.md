@@ -10,7 +10,7 @@ This repository includes a **task management example** (projects, tasks, tags) t
 
 ### Prerequisites
 
-- Node.js 18+
+- Node.js 24
 - npm
 
 ### Installation
