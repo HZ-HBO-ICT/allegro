@@ -49,9 +49,6 @@ export class ProjectService {
           title: input.title,
           description: input.description,
         },
-        include: {
-          tasks: true,
-        },
       });
     } catch (error) {
       throw new Error(`Failed to create project: ${error}`);
@@ -69,9 +66,6 @@ export class ProjectService {
         data: {
           ...(input.title && { title: input.title }),
           ...(input.description !== undefined && { description: input.description }),
-        },
-        include: {
-          tasks: true,
         },
       });
     } catch (error) {
