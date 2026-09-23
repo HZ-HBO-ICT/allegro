@@ -42,6 +42,8 @@ npm start
 ```
 src/
 ├── server.ts              # App setup: middleware, route mounting, error handler
+├── generated/
+│   └── prisma/            # Generated Prisma client (do not edit)
 ├── lib/
 │   └── prisma.ts          # Shared Prisma client (SQLite adapter)
 ├── middleware/
@@ -62,9 +64,6 @@ src/
 prisma/
 ├── schema.prisma          # Prisma data model
 └── seed.ts                # Database seed script
-
-generated/
-└── prisma/                # Generated Prisma client (do not edit)
 
 prisma.config.ts           # Prisma 7 configuration
 ```
